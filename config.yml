@@ -1,0 +1,41 @@
+paths:
+  results: "./results/"
+  models: "./models/"
+  data: "./data/"
+
+data:
+  name: "fashion_mnist"
+  image_width: 28
+  image_height: 28
+  n_channels: 1
+  n_classes: 10
+
+grid_2d:
+  height: 512
+  width: 128
+
+grid_3d:
+  n_layers: 16
+
+training:
+  batch_size: 256
+  learning_rate: 1.0e-4
+  n_epochs: 300
+  n_workers: 4  # set to 0 for debugging
+
+learning_rate_scheduler:
+  step_size: 1000
+  gamma: 0.1
+
+testing:
+  batch_size: 2000
+
+tracking:
+  save_stats_every_n_epochs: 10
+  save_model_every_n_epochs:  10
+
+visualization:
+  n_samples: 64
+  color_map: "bwr"
+  interpolation: null # "null" stands for "None", "spline16", "sinc"
+  resolution: 250
