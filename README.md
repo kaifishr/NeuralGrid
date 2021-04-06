@@ -13,4 +13,4 @@ using again a fully connected layer.
 
 ![activation_grid](https://kaifabi.github.io/assets/images/post10/activation_grid_end.png)
 
-More information about this project can be found [here](https://github.com/KaiFabi/NeuralGrid).
+More information about this project can be found [here](https://kaifabi.github.io/2021/04/06/neural-grid.html).
