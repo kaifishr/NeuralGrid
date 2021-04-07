@@ -1,8 +1,5 @@
 """Program to train grid-based neural networks."""
 
-# TODO: Run naive grid implementation with new batched samples [784] -> [1, 784]
-# TODO: Ask in forum how to create sparse matrices as below. Otherwise matrix vector multiplication not possible.
-
 from src.neural_grid_2d import GridNeuralNetwork2D
 from src.neural_grid_3d import GridNeuralNetwork3D
 from src.utils import comp_metrics, data_generator
