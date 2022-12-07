@@ -30,8 +30,7 @@ class GridNeuralNetwork3D(nn.Module):
 
 
 class NeuralGrid(nn.Module):
-    """ Implements a three dimensional neural grid
-    """
+    """Implements a three dimensional neural grid"""
 
     def __init__(self, cfg):
         super().__init__()
@@ -48,8 +47,8 @@ class NeuralGrid(nn.Module):
 
 
 class GridLayer(nn.Module):
-    """Class implements layer of a three dimensional neural grid
-    """
+    """Class implements layer of a three dimensional neural grid"""
+
     def __init__(self, cfg):
         super().__init__()
 
@@ -65,24 +64,40 @@ class GridLayer(nn.Module):
         self.padding = (pad, pad)
 
         # Trainable parameters
-        weight = xavier_init(size=(grid_height, grid_width),
-                             fan_in=self.kernel_size[0] ** 2,
-                             fan_out=self.kernel_size[0] ** 2)
+        weight = xavier_init(
+            size=(grid_height, grid_width),
+            fan_in=self.kernel_size[0] ** 2,
+            fan_out=self.kernel_size[0] ** 2,
+        )
 
         weight.resize_(1, 1, grid_height, grid_width)
         self.weight = nn.Parameter(data=weight, requires_grad=True)
-        self.bias = nn.Parameter(data=torch.zeros(size=(grid_height, grid_width)), requires_grad=True)
+        self.bias = nn.Parameter(
+            data=torch.zeros(size=(grid_height, grid_width)), requires_grad=True
+        )
 
         self.activation_function = torch.sin
 
     def forward(self, x):
         # Unfold activations and weights for grid operations
         x = F.unfold(input=x, kernel_size=self.kernel_size, padding=self.padding)
-        w = F.unfold(input=self.weight, kernel_size=self.kernel_size, padding=self.padding)
+        w = F.unfold(
+            input=self.weight, kernel_size=self.kernel_size, padding=self.padding
+        )
 
         # Prepare data
-        x = x.view(-1, self.kernel_size[0] * self.kernel_size[1], self.image_width, self.image_height)
-        w = w.view(-1, self.kernel_size[0] * self.kernel_size[1], self.image_width, self.image_height)
+        x = x.view(
+            -1,
+            self.kernel_size[0] * self.kernel_size[1],
+            self.image_width,
+            self.image_height,
+        )
+        w = w.view(
+            -1,
+            self.kernel_size[0] * self.kernel_size[1],
+            self.image_width,
+            self.image_height,
+        )
 
         # Pre-activation (weighted sum + bias)
         x = (w * x).sum(dim=1, keepdim=True) + self.bias

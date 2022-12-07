@@ -71,48 +71,76 @@ def data_generator(cfg):
 
     """
 
-    avg = (0.5,)
-    std = (0.5,)
-
-    transform_train = transforms.Compose([transforms.ToTensor(),
-                                          transforms.Normalize(avg, std)])
-
-    transform_test = transforms.Compose([transforms.ToTensor(),
-                                         transforms.Normalize(avg, std)])
-
     if cfg["data"]["name"] == "mnist":
-        train_set = torchvision.datasets.MNIST(root=cfg["paths"]["data"],
-                                               train=True,
-                                               download=True,
-                                               transform=transform_train)
 
-        test_set = torchvision.datasets.MNIST(root=cfg["paths"]["data"],
-                                              train=False,
-                                              download=True,
-                                              transform=transform_test)
+        mean = (0.1307,)
+        std = (0.3081,)
+
+        transform_train = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+        )
+
+        transform_test = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+        )
+
+        train_set = torchvision.datasets.MNIST(
+            root=cfg["paths"]["data"],
+            train=True,
+            download=True,
+            transform=transform_train,
+        )
+
+        test_set = torchvision.datasets.MNIST(
+            root=cfg["paths"]["data"],
+            train=False,
+            download=True,
+            transform=transform_test,
+        )
+
     elif cfg["data"]["name"] == "fashion_mnist":
-        train_set = torchvision.datasets.FashionMNIST(root=cfg["paths"]["data"],
-                                                      train=True,
-                                                      download=True,
-                                                      transform=transform_train)
 
-        test_set = torchvision.datasets.FashionMNIST(root=cfg["paths"]["data"],
-                                                     train=False,
-                                                     download=True,
-                                                     transform=transform_test)
+        mean = (0.2859,)
+        std = (0.3530,)
+
+        transform_train = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+        )
+
+        transform_test = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+        )
+
+        train_set = torchvision.datasets.FashionMNIST(
+            root=cfg["paths"]["data"],
+            train=True,
+            download=True,
+            transform=transform_train,
+        )
+
+        test_set = torchvision.datasets.FashionMNIST(
+            root=cfg["paths"]["data"],
+            train=False,
+            download=True,
+            transform=transform_test,
+        )
     else:
         raise NotImplementedError("Dataset not available.")
 
-    train_loader = DataLoader(train_set,
-                              batch_size=cfg["training"]["batch_size"],
-                              shuffle=True,
-                              drop_last=True,
-                              num_workers=cfg["training"]["n_workers"])
+    train_loader = DataLoader(
+        train_set,
+        batch_size=cfg["training"]["batch_size"],
+        shuffle=True,
+        drop_last=True,
+        num_workers=cfg["training"]["n_workers"],
+    )
 
-    test_loader = DataLoader(test_set,
-                             batch_size=cfg["testing"]["batch_size"],
-                             shuffle=True,
-                             drop_last=True,
-                             num_workers=cfg["training"]["n_workers"])
+    test_loader = DataLoader(
+        test_set,
+        batch_size=cfg["testing"]["batch_size"],
+        shuffle=True,
+        drop_last=True,
+        num_workers=cfg["training"]["n_workers"],
+    )
 
     return train_loader, test_loader

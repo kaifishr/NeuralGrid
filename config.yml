@@ -11,17 +11,17 @@ data:
   n_classes: 10
 
 grid_2d:
-  height: 512
-  width: 128
+  height: 128
+  width: 64
 
 grid_3d:
   n_layers: 16
 
 training:
-  batch_size: 256
+  batch_size: 512
   learning_rate: 1.0e-4
   n_epochs: 300
-  n_workers: 4  # set to 0 for debugging
+  n_workers: 2  # set to 0 for debugging
 
 learning_rate_scheduler:
   step_size: 1000
@@ -35,7 +35,7 @@ tracking:
   save_model_every_n_epochs:  10
 
 visualization:
-  n_samples: 64
+  n_samples: 16
   color_map: "bwr"
   interpolation: null # "null" stands for "None", "spline16", "sinc"
   resolution: 250

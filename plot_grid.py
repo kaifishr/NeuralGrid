@@ -4,21 +4,27 @@ Program loads a pre-trained PyTorch model and visualizes the neural grid's
 activation pattern.
 
 """
-from src.neural_grid_2d import GridNeuralNetwork2D
-from src.neural_grid_3d import GridNeuralNetwork3D
-#from torch.utils.data import DataLoader
-from src.utils import data_generator
+import os
+import pathlib
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pathlib
 import torch
-#import torchvision
+
+# import torchvision
 import torchvision.transforms as transforms
 import yaml
 
+from src.neural_grid_2d import GridNeuralNetwork2D
+from src.neural_grid_2d import GridLayer
 
-def visualize_grid_2d(cfg, model_path):
+from src.neural_grid_3d import GridNeuralNetwork3D
+
+# from torch.utils.data import DataLoader
+from src.utils import data_generator
+
+
+def plot_grid_2d(cfg, model_path):
     # Create instance of model
     model = GridNeuralNetwork2D(cfg)
     # Load pre-trained model
@@ -41,15 +47,21 @@ def visualize_grid_3d(cfg, model_path):
 
 
 def load_test_images(cfg):
+    """Loads test images for plotting.
+
+    Loads same number of instances of each class.
+
+    Args:
+        cfg: Configuration.
+    """
     # Parameters
     n_samples = cfg["visualization"]["n_samples"]
     n_classes = cfg["data"]["n_classes"]
 
     # Load data
     cfg["testing"]["batch_size"] = 1
-    _, test_loader = data_generator(cfg)
-
-    dataiter = iter(test_loader)
+    cfg["training"]["n_workers"] = 0
+    _, dataloader = data_generator(cfg)
 
     # Create dictionary to hold test data
     data_dict = {i: {"images": [], "labels": []} for i in range(n_classes)}
@@ -58,13 +70,12 @@ def load_test_images(cfg):
     initial_list = [0 for i in range(n_classes)]
     target_list = [n_samples for i in range(n_classes)]
 
-    while True:
-        images, labels = dataiter.next()  # may break for num_samples > 1000
-        label = labels.item()
+    for image, target in dataloader:
+        label = target.item()
         if initial_list[label] < n_samples:
             initial_list[label] += 1
-            data_dict[label]["images"].append(images.reshape(1, -1))
-            data_dict[label]["labels"].append(labels)
+            data_dict[label]["images"].append(image.reshape(1, -1))
+            data_dict[label]["labels"].append(target)
         if initial_list == target_list:
             break
 
@@ -78,14 +89,15 @@ def get_activation(name):
     """Get model's activations
     Used once after creating instance of model and before inference.
     """
+
     def hook(model, input, output):
         activation[name] = output.detach()
+
     return hook
 
 
 def vis_grid_2d(model, data_dict, cfg):
-    """Method to plot parameters and activations of neural grid.
-    """
+    """Method to plot parameters and activations of neural grid."""
     # Parameters
     n_classes = cfg["data"]["n_classes"]
     n_samples = cfg["visualization"]["n_samples"]
@@ -94,7 +106,9 @@ def vis_grid_2d(model, data_dict, cfg):
     interpolation = cfg["visualization"]["interpolation"]
     results_dir = cfg["paths"]["results"]
 
+    #####################
     # Extract activations
+    #####################
     for name, module in model.named_modules():
         if "grid_layers" in name:
             module.register_forward_hook(get_activation(name))
@@ -113,7 +127,9 @@ def vis_grid_2d(model, data_dict, cfg):
 
     h, w = np.squeeze(np.array(activation_grids[0])).shape[1:]
 
+    ###################
     # Activation layers
+    ###################
     if h > w:
         fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(5, 5))
     else:
@@ -146,15 +162,17 @@ def vis_grid_2d(model, data_dict, cfg):
     plt.savefig(results_dir + "std_activation_grid.png", dpi=dpi)
     plt.close(fig)
 
+    ###################################
     # Extract weight and biases of grid
+    ###################################
     weight_grid = list()
     bias_grid = list()
-    for name, p in model.named_parameters():
-        if "neural_grid" in name:
-            if "weight" in name:
-                weight_grid.append(p.detach().numpy())
-            if "bias" in name:
-                bias_grid.append(p.detach().numpy())
+
+    for module in model.modules():
+        if isinstance(module, GridLayer):
+            weight_grid.append(module.weight.detach().numpy())
+            bias_grid.append(module.bias.detach().numpy())
+    
     weight_grid = np.array(weight_grid)[:, 1:-1].T
     bias_grid = np.array(bias_grid).T
 
@@ -177,8 +195,7 @@ def vis_grid_2d(model, data_dict, cfg):
 
 
 def vis_grid_3d(model, data_dict, cfg, visualize_class=0):
-    """Method to plot parameters and activations of three-dimensional neural grid.
-    """
+    """Method to plot parameters and activations of three-dimensional neural grid."""
 
     # Parameters
     n_samples = cfg["visualization"]["n_samples"]
@@ -199,7 +216,9 @@ def vis_grid_3d(model, data_dict, cfg, visualize_class=0):
 
     # Get random sample of defined number
     rnd_idx = np.random.randint(n_samples)
-    x = data_dict[visualize_class]["images"][rnd_idx].reshape(1, n_channels, image_height, image_width)
+    x = data_dict[visualize_class]["images"][rnd_idx].reshape(
+        1, n_channels, image_height, image_width
+    )
     _ = model(x)
 
     activation_grid = list()
@@ -216,7 +235,17 @@ def vis_grid_3d(model, data_dict, cfg, visualize_class=0):
     mask = np.abs(activation_grid) > 0.3
     idx = np.arange(int(np.prod(activation_grid.shape)))
     x, y, z = np.unravel_index(idx, activation_grid.shape)
-    ax.scatter(x, y, z, c=activation_grid.flatten(), s=10.0 * mask, alpha=0.4, marker="s", cmap=cmap, linewidth=0)
+    ax.scatter(
+        x,
+        y,
+        z,
+        c=activation_grid.flatten(),
+        s=10.0 * mask,
+        alpha=0.4,
+        marker="s",
+        cmap=cmap,
+        linewidth=0,
+    )
     plt.tight_layout()
     plt.savefig(results_dir + "activation_grid_3d_scatter.png", dpi=dpi)
     plt.close(fig)
@@ -265,6 +294,7 @@ def vis_grid_3d(model, data_dict, cfg, visualize_class=0):
 
 
 if __name__ == "__main__":
+
     # Load config
     with open("config.yml", "r") as file:
         cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -273,7 +303,7 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    model_path = "models/Apr06_20-41-31/model.pth"
+    model_path = "models/Dec07_15-36-18_gauss/model.pth"
 
-    visualize_grid_2d(cfg, model_path)
-    # visualize_grid_3d(cfg, model_path)
+    plot_grid_2d(cfg, model_path)
+    # plot_grid_3d(cfg, model_path)
