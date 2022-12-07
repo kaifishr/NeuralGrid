@@ -29,6 +29,7 @@ def plot_grid_2d(cfg, model_path):
     model = GridNeuralNetwork2D(cfg)
     # Load pre-trained model
     model.load_state_dict(torch.load(model_path))
+    model.eval()
     # Load data
     data_dict = load_test_images(cfg)
     # Visualize grid for each class
@@ -40,6 +41,7 @@ def visualize_grid_3d(cfg, model_path):
     model = GridNeuralNetwork3D(cfg)
     # Load pre-trained model
     model.load_state_dict(torch.load(model_path))
+    model.eval()
     # Load data
     data_dict = load_test_images(cfg)
     # Visualize grid for each class
@@ -297,7 +299,7 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    model_path = "models/Dec07_16-14-08_gauss/model.pth"
+    model_path = "models/Dec07_20-48-46_gauss/model.pth"
 
     plot_grid_2d(cfg, model_path)
     # plot_grid_3d(cfg, model_path)

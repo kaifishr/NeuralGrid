@@ -78,7 +78,7 @@ def train_neural_grid():
         model.eval()
 
         # Write trainings statistics
-        if epoch % cfg["tracking"]["save_stats_every_n_epochs"] == 0:
+        if epoch % cfg["tracking"]["train_stats_every_n_epochs"] == 0:
 
             train_loss = running_loss / running_counter
             train_accuracy = running_accuracy / running_counter
@@ -86,7 +86,7 @@ def train_neural_grid():
             writer.add_scalar("train_loss", train_loss, global_step=epoch)
             writer.add_scalar("train_accuracy", train_accuracy, global_step=epoch)
 
-            template = "epoch {} loss {:.6f} accuracy {:.5f}"
+            template = "epoch {} loss {:.6f} train_accuracy {:.5f}"
 
             print(
                 template.format(
@@ -96,7 +96,7 @@ def train_neural_grid():
                 )
             )
 
-        if epoch % cfg["tracking"]["save_stats_every_n_epochs"] == 0:
+        if epoch % cfg["tracking"]["test_stats_every_n_epochs"] == 0:
             test_loss, test_accuracy = comp_metrics(
                 model=model, data_loader=test_loader, device=device
             )

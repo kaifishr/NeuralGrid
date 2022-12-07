@@ -9,8 +9,10 @@ from torchvision import transforms as transforms
 
 def xavier_init(size, fan_in, fan_out):
     """Custom Xavier initialization for neural grid."""
-    limit = math.sqrt(6.0 / (fan_in + fan_out))
+    gain = math.sqrt(2.0)
+    limit = gain * math.sqrt(6.0 / (fan_in + fan_out))
     x = torch.empty(size=size).uniform_(-limit, limit)
+    # x = torch.empty(size=size).normal_(mean=0.0, std=0.15)
     return x
 
 
@@ -28,6 +30,7 @@ def comp_metrics(model, data_loader, device):
     Returns: two floats, loss and accuracy
 
     """
+    model.eval()
 
     loss_func = torch.nn.CrossEntropyLoss()
 
@@ -37,8 +40,8 @@ def comp_metrics(model, data_loader, device):
 
     with torch.no_grad():
 
-        for i, data in enumerate(data_loader):
-            inputs, labels = data[0].to(device), data[1].to(device)
+        for inputs, labels in data_loader:
+            inputs, labels = inputs.to(device), labels.to(device)
 
             # Preparing input data
             x = inputs
@@ -57,6 +60,8 @@ def comp_metrics(model, data_loader, device):
 
     loss = running_loss / running_counter
     accuracy = running_accuracy / running_counter
+
+    model.train()
 
     return loss, accuracy
 

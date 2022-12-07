@@ -24,22 +24,20 @@ class GridNeuralNetwork2D(nn.Module):
 
         # Dense layers
         n_inputs = image_height * image_width * n_channels
-        self.dense_in = nn.Linear(n_inputs, grid_height)
-        self.dense_out = nn.Linear(grid_height, n_outputs)
+        self.linear_1 = nn.Linear(n_inputs, grid_height)
+        self.linear_2 = nn.Linear(grid_height, n_outputs)
 
         self.layer_norm = nn.LayerNorm(grid_height)
 
-        # Grid
         self.neural_grid = NeuralGrid(params)
         # Very slow version of neural grid, runs only on CPU with batch_size=1
         # self.neural_grid = NeuralGrid2(params)
 
-
     def forward(self, x):
         x = x.flatten(start_dim=1)
-        x = self.layer_norm(self.dense_in(x))
+        x = self.layer_norm(self.linear_1(x))
         x = self.neural_grid(x)
-        x = self.dense_out(x)
+        x = self.linear_2(x)
         return x
 
 
@@ -81,12 +79,11 @@ class GridLayer(nn.Module):
         weight = F.pad(
             input=weight, pad=[self.padding, self.padding], mode="constant", value=0.0
         )
-        self.weight = nn.Parameter(weight, requires_grad=True)
+        self.weight = nn.Parameter(1.0 + 0*weight, requires_grad=True)
         self.bias = nn.Parameter(torch.zeros(size=(grid_height,)), requires_grad=True)
 
-        # self.activation_function = nn.GELU()
-        self.activation_function = nn.GELU()
         self.layer_norm = nn.LayerNorm(grid_height)
+        self.dropout = nn.Dropout(0.1)
 
     def forward(self, x_in):
         # Same padding to ensure that input size equals output size
@@ -97,14 +94,10 @@ class GridLayer(nn.Module):
         # Unfold activations and weights for grid operations
         x = x.unfold(dimension=1, size=self.kernel_size, step=self.stride)
         w = self.weight.unfold(dimension=0, size=self.kernel_size, step=self.stride)
-
-        # Compute pre-activation
         x = (w * x).sum(dim=-1) + self.bias
 
-        # Compute activations
-        # x = self.activation_function(x)
-
         x = self.layer_norm(x)
+        x = self.dropout(x)
 
         return x
 
