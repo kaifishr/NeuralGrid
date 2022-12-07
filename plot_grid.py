@@ -106,11 +106,11 @@ def vis_grid_2d(model, data_dict, cfg):
     interpolation = cfg["visualization"]["interpolation"]
     results_dir = cfg["paths"]["results"]
 
-    #####################
-    # Extract activations
-    #####################
+    ##########################################################
+    # Register forward activation hooks to extract activations 
+    ##########################################################
     for name, module in model.named_modules():
-        if "grid_layers" in name:
+        if isinstance(module, GridLayer):
             module.register_forward_hook(get_activation(name))
 
     activation_grids = {i: [] for i in range(n_classes)}
@@ -127,13 +127,10 @@ def vis_grid_2d(model, data_dict, cfg):
 
     h, w = np.squeeze(np.array(activation_grids[0])).shape[1:]
 
-    ###################
-    # Activation layers
-    ###################
-    if h > w:
-        fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(5, 5))
-    else:
-        fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(10, 4))
+    ##################
+    # Plot activations 
+    ##################
+    fig, axes = plt.subplots(nrows=2, ncols=5)
 
     for i, ax in enumerate(axes.flatten()):
         grid = np.array(activation_grids[i]).mean(axis=0)
@@ -143,13 +140,10 @@ def vis_grid_2d(model, data_dict, cfg):
         ax.set_axis_off()
 
     plt.tight_layout()
-    plt.savefig(results_dir + "avg_activation_grid.png", dpi=dpi)
+    plt.savefig(results_dir + "avg_activation_grid.png", bbox_inches="tight", dpi=dpi)
     plt.close(fig)
 
-    if h > w:
-        fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(5, 5))
-    else:
-        fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(10, 4))
+    fig, axes = plt.subplots(nrows=2, ncols=5)
 
     for i, ax in enumerate(axes.flatten()):
         grid = np.array(activation_grids[i]).std(axis=0)
@@ -159,7 +153,7 @@ def vis_grid_2d(model, data_dict, cfg):
         ax.set_axis_off()
 
     plt.tight_layout()
-    plt.savefig(results_dir + "std_activation_grid.png", dpi=dpi)
+    plt.savefig(results_dir + "std_activation_grid.png", bbox_inches="tight", dpi=dpi)
     plt.close(fig)
 
     ###################################
@@ -303,7 +297,7 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    model_path = "models/Dec07_15-36-18_gauss/model.pth"
+    model_path = "models/Dec07_16-14-08_gauss/model.pth"
 
     plot_grid_2d(cfg, model_path)
     # plot_grid_3d(cfg, model_path)
