@@ -53,10 +53,13 @@ class NeuralGrid(nn.Module):
         self.grid_layers = nn.ModuleList()
         for _ in range(grid_width):
             self.grid_layers.append(GridLayer(params))
+            
+        self.dropout = nn.Dropout(0.05)
 
     def forward(self, x):
         for grid_layer in self.grid_layers:
             x = grid_layer(x)
+            x = self.dropout(x)
         return x
 
 
@@ -73,17 +76,14 @@ class GridLayer(nn.Module):
         self.padding = int(0.5 * (self.kernel_size - 1))
 
         # Trainable parameters
-        weight = xavier_init(
-            size=(grid_height,), fan_in=self.kernel_size, fan_out=self.kernel_size
-        )
+        weight = xavier_init(size=(grid_height,), fan_in=self.kernel_size, fan_out=1)
         weight = F.pad(
             input=weight, pad=[self.padding, self.padding], mode="constant", value=0.0
         )
-        self.weight = nn.Parameter(1.0 + 0*weight, requires_grad=True)
+        self.weight = nn.Parameter(0.1+0.0*weight, requires_grad=True)
         self.bias = nn.Parameter(torch.zeros(size=(grid_height,)), requires_grad=True)
 
         self.layer_norm = nn.LayerNorm(grid_height)
-        self.dropout = nn.Dropout(0.1)
 
     def forward(self, x_in):
         # Same padding to ensure that input size equals output size
@@ -96,8 +96,8 @@ class GridLayer(nn.Module):
         w = self.weight.unfold(dimension=0, size=self.kernel_size, step=self.stride)
         x = (w * x).sum(dim=-1) + self.bias
 
+        # x = torch.sin(x)
         x = self.layer_norm(x)
-        x = self.dropout(x)
 
         return x
 

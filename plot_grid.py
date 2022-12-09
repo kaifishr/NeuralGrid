@@ -132,7 +132,7 @@ def vis_grid_2d(model, data_dict, cfg):
     ##################
     # Plot activations 
     ##################
-    fig, axes = plt.subplots(nrows=2, ncols=5)
+    fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(16, 4))
 
     for i, ax in enumerate(axes.flatten()):
         grid = np.array(activation_grids[i]).mean(axis=0)
@@ -145,7 +145,7 @@ def vis_grid_2d(model, data_dict, cfg):
     plt.savefig(results_dir + "avg_activation_grid.png", bbox_inches="tight", dpi=dpi)
     plt.close(fig)
 
-    fig, axes = plt.subplots(nrows=2, ncols=5)
+    fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(16, 4))
 
     for i, ax in enumerate(axes.flatten()):
         grid = np.array(activation_grids[i]).std(axis=0)
@@ -172,10 +172,7 @@ def vis_grid_2d(model, data_dict, cfg):
     weight_grid = np.array(weight_grid)[:, 1:-1].T
     bias_grid = np.array(bias_grid).T
 
-    if h > w:
-        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(3, 5))
-    else:
-        fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(8, 4))
+    fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(4, 5))
 
     axes[0].imshow(weight_grid, cmap=cmap, interpolation=interpolation)
     axes[0].set_title("Weights")
@@ -299,7 +296,7 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    model_path = "models/Dec07_20-48-46_gauss/model.pth"
+    model_path = "models/Dec09_17-08-40_gauss/model.pth"
 
     plot_grid_2d(cfg, model_path)
     # plot_grid_3d(cfg, model_path)

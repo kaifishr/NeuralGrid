@@ -9,10 +9,8 @@ from torchvision import transforms as transforms
 
 def xavier_init(size, fan_in, fan_out):
     """Custom Xavier initialization for neural grid."""
-    gain = math.sqrt(2.0)
-    limit = gain * math.sqrt(6.0 / (fan_in + fan_out))
+    limit = math.sqrt(6.0 / (fan_in + fan_out))
     x = torch.empty(size=size).uniform_(-limit, limit)
-    # x = torch.empty(size=size).normal_(mean=0.0, std=0.15)
     return x
 
 
@@ -82,12 +80,17 @@ def data_generator(cfg):
         std = (0.3081,)
 
         transform_train = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+            [
+                transforms.RandomCrop(28, padding=4),
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std),
+            ]
         )
 
         transform_test = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize(mean, std)]
         )
+
 
         train_set = torchvision.datasets.MNIST(
             root=cfg["paths"]["data"],
@@ -109,7 +112,13 @@ def data_generator(cfg):
         std = (0.3530,)
 
         transform_train = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+            [
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.RandomCrop(28, padding=4),
+                transforms.ToTensor(),
+                transforms.Normalize(mean, std),
+            ]
         )
 
         transform_test = transforms.Compose(
@@ -129,6 +138,42 @@ def data_generator(cfg):
             download=True,
             transform=transform_test,
         )
+
+    elif cfg["data"]["name"] == "cifar10":
+
+        mean = (0.49139968, 0.48215841, 0.44653091)
+        std = (0.24703223, 0.24348513, 0.26158784)
+
+        transform_train = transforms.Compose(
+            [
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.RandomCrop(32, padding=4),
+                transforms.ToTensor(),
+                transforms.RandomErasing(),
+                transforms.Normalize(mean, std),
+            ]
+        )
+
+        transform_test = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+        )
+
+        mean, std = None, None
+
+        train_set = torchvision.datasets.CIFAR10(
+            root=cfg["paths"]["data"],
+            train=True, 
+            download=True, 
+            transform=transform_train
+        )
+        test_set = torchvision.datasets.CIFAR10(
+            root=cfg["paths"]["data"],
+            train=False, 
+            download=True, 
+            transform=transform_test
+        )
+
     else:
         raise NotImplementedError("Dataset not available.")
 

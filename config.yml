@@ -4,22 +4,22 @@ paths:
   data: "./data/"
 
 data:
-  name: "fashion_mnist"
-  image_width: 28
-  image_height: 28
-  n_channels: 1
+  name: "cifar10"
+  image_width: 32
+  image_height: 32
+  n_channels: 3
   n_classes: 10
 
 grid_2d:
-  height: 128
-  width: 256
+  height: 64
+  width: 128
 
 grid_3d:
   n_layers: 16
 
 training:
   batch_size: 512
-  learning_rate: 3.0e-4
+  learning_rate: 1.0e-4
   n_epochs: 1000
   n_workers: 2  # set to 0 for debugging
 
@@ -32,7 +32,7 @@ tracking:
   save_model_every_n_epochs:  10
 
 visualization:
-  n_samples: 32
-  color_map: "magma"
+  n_samples: 16
+  color_map: "seismic"
   interpolation: null # "null" stands for "None", "spline16", "sinc"
   resolution: 250
