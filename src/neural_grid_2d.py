@@ -53,7 +53,7 @@ class NeuralGrid(nn.Module):
         self.grid_layers = nn.ModuleList()
         for _ in range(grid_width):
             self.grid_layers.append(GridLayer(params))
-            
+
         self.dropout = nn.Dropout(0.05)
 
     def forward(self, x):
@@ -80,7 +80,7 @@ class GridLayer(nn.Module):
         weight = F.pad(
             input=weight, pad=[self.padding, self.padding], mode="constant", value=0.0
         )
-        self.weight = nn.Parameter(0.1+0.0*weight, requires_grad=True)
+        self.weight = nn.Parameter(0.1 + 0.0 * weight, requires_grad=True)
         self.bias = nn.Parameter(torch.zeros(size=(grid_height,)), requires_grad=True)
 
         self.layer_norm = nn.LayerNorm(grid_height)

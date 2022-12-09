@@ -109,7 +109,7 @@ def vis_grid_2d(model, data_dict, cfg):
     results_dir = cfg["paths"]["results"]
 
     ##########################################################
-    # Register forward activation hooks to extract activations 
+    # Register forward activation hooks to extract activations
     ##########################################################
     for name, module in model.named_modules():
         if isinstance(module, GridLayer):
@@ -130,7 +130,7 @@ def vis_grid_2d(model, data_dict, cfg):
     h, w = np.squeeze(np.array(activation_grids[0])).shape[1:]
 
     ##################
-    # Plot activations 
+    # Plot activations
     ##################
     fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(16, 4))
 
@@ -168,7 +168,7 @@ def vis_grid_2d(model, data_dict, cfg):
         if isinstance(module, GridLayer):
             weight_grid.append(module.weight.detach().numpy())
             bias_grid.append(module.bias.detach().numpy())
-    
+
     weight_grid = np.array(weight_grid)[:, 1:-1].T
     bias_grid = np.array(bias_grid).T
 

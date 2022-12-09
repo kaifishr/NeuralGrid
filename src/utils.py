@@ -91,7 +91,6 @@ def data_generator(cfg):
             [transforms.ToTensor(), transforms.Normalize(mean, std)]
         )
 
-
         train_set = torchvision.datasets.MNIST(
             root=cfg["paths"]["data"],
             train=True,
@@ -163,15 +162,15 @@ def data_generator(cfg):
 
         train_set = torchvision.datasets.CIFAR10(
             root=cfg["paths"]["data"],
-            train=True, 
-            download=True, 
-            transform=transform_train
+            train=True,
+            download=True,
+            transform=transform_train,
         )
         test_set = torchvision.datasets.CIFAR10(
             root=cfg["paths"]["data"],
-            train=False, 
-            download=True, 
-            transform=transform_test
+            train=False,
+            download=True,
+            transform=transform_test,
         )
 
     else:
