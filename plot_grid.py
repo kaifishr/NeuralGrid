@@ -209,9 +209,7 @@ def vis_grid_3d(model, data_dict, cfg, visualize_class=0):
 
     # Get random sample of defined number
     rnd_idx = np.random.randint(n_samples)
-    x = data_dict[visualize_class]["images"][rnd_idx].reshape(
-        1, n_channels, image_height, image_width
-    )
+    x = data_dict[visualize_class]["images"][rnd_idx].reshape(1, n_channels, image_height, image_width)
     _ = model(x)
 
     activation_grid = list()
@@ -296,7 +294,7 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    model_path = "models/Dec09_17-08-40_gauss/model.pth"
+    model_path = "models/Jan27_13-50-37/model.pth"
 
     plot_grid_2d(cfg, model_path)
     # plot_grid_3d(cfg, model_path)

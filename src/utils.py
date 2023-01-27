@@ -7,10 +7,19 @@ from torch.utils.data import DataLoader
 from torchvision import transforms as transforms
 
 
-def xavier_init(size, fan_in, fan_out):
+def xavier_init(size: tuple, fan_in: float, fan_out: float, gain: float = 1.0):
     """Custom Xavier initialization for neural grid."""
-    limit = math.sqrt(6.0 / (fan_in + fan_out))
+    limit = gain * math.sqrt(6.0 / (fan_in + fan_out))
     x = torch.empty(size=size).uniform_(-limit, limit)
+    return x
+
+
+def kaiming_init(size: tuple, fan_in: float, gain: float = 1.0):
+    """Custom Kaiming initialization for neural grid."""
+    gain = gain
+    mean = 0.0
+    std = gain / math.sqrt(fan_in)
+    x = torch.empty(size=size).normal_(mean, std)
     return x
 
 
@@ -87,9 +96,7 @@ def data_generator(cfg):
             ]
         )
 
-        transform_test = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize(mean, std)]
-        )
+        transform_test = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
 
         train_set = torchvision.datasets.MNIST(
             root=cfg["paths"]["data"],
@@ -120,9 +127,7 @@ def data_generator(cfg):
             ]
         )
 
-        transform_test = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize(mean, std)]
-        )
+        transform_test = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
 
         train_set = torchvision.datasets.FashionMNIST(
             root=cfg["paths"]["data"],
@@ -154,9 +159,7 @@ def data_generator(cfg):
             ]
         )
 
-        transform_test = transforms.Compose(
-            [transforms.ToTensor(), transforms.Normalize(mean, std)]
-        )
+        transform_test = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
 
         mean, std = None, None
 

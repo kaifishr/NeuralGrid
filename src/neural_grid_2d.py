@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.utils import xavier_init
+from src.utils import kaiming_init
 
 torch.manual_seed(73274)
 
@@ -47,6 +48,7 @@ class NeuralGrid(nn.Module):
     def __init__(self, params):
         super().__init__()
 
+        grid_height = params["grid_2d"]["height"]
         grid_width = params["grid_2d"]["width"]
 
         # Add grid layers to a list
@@ -54,12 +56,11 @@ class NeuralGrid(nn.Module):
         for _ in range(grid_width):
             self.grid_layers.append(GridLayer(params))
 
-        self.dropout = nn.Dropout(0.05)
+        self.layer_norm = nn.LayerNorm(grid_height)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         for grid_layer in self.grid_layers:
-            x = grid_layer(x)
-            x = self.dropout(x)
+            x = x + grid_layer(torch.relu(self.layer_norm(x)))
         return x
 
 
@@ -76,28 +77,22 @@ class GridLayer(nn.Module):
         self.padding = int(0.5 * (self.kernel_size - 1))
 
         # Trainable parameters
-        weight = xavier_init(size=(grid_height,), fan_in=self.kernel_size, fan_out=1)
-        weight = F.pad(
-            input=weight, pad=[self.padding, self.padding], mode="constant", value=0.0
-        )
-        self.weight = nn.Parameter(0.1 + 0.0 * weight, requires_grad=True)
+        # weight = xavier_init(size=(grid_height,), fan_in=self.kernel_size, fan_out=1)
+        weight = kaiming_init(size=(grid_height,), fan_in=self.kernel_size, gain=2.0**0.5)
+        weight = F.pad(input=weight, pad=[self.padding, self.padding], mode="constant", value=0.0)
+        self.weight = nn.Parameter(weight, requires_grad=True)
+        # self.weight = nn.Parameter(0.1 + 0.0 * weight, requires_grad=True)
         self.bias = nn.Parameter(torch.zeros(size=(grid_height,)), requires_grad=True)
 
-        self.layer_norm = nn.LayerNorm(grid_height)
 
-    def forward(self, x_in):
+    def forward(self, x_in: torch.Tensor) -> torch.Tensor:
         # Same padding to ensure that input size equals output size
-        x = F.pad(
-            input=x_in, pad=[self.padding, self.padding], mode="constant", value=0.0
-        )
+        x = F.pad(input=x_in, pad=[self.padding, self.padding], mode="constant", value=0.0)
 
         # Unfold activations and weights for grid operations
         x = x.unfold(dimension=1, size=self.kernel_size, step=self.stride)
         w = self.weight.unfold(dimension=0, size=self.kernel_size, step=self.stride)
         x = (w * x).sum(dim=-1) + self.bias
-
-        # x = torch.sin(x)
-        x = self.layer_norm(x)
 
         return x
 
@@ -114,18 +109,13 @@ class NeuralGrid2(nn.Module):
         self.grid_height = params["grid_2d"]["height"]
 
         # Placeholder for activations
-        self.a = [
-            [torch.zeros(size=(1,)) for _ in range(self.grid_width + 1)]
-            for _ in range(self.grid_height + 2)
-        ]
+        self.a = [[torch.zeros(size=(1,)) for _ in range(self.grid_width + 1)] for _ in range(self.grid_height + 2)]
 
         # Trainable parameters
         w = xavier_init(size=(self.grid_height, self.grid_width), fan_in=3, fan_out=3)
         w = F.pad(input=w, pad=[0, 0, 1, 1], mode="constant", value=0.0)
         self.w = nn.Parameter(w, requires_grad=True)
-        self.b = nn.Parameter(
-            torch.zeros(size=(self.grid_height, self.grid_width)), requires_grad=True
-        )
+        self.b = nn.Parameter(torch.zeros(size=(self.grid_height, self.grid_width)), requires_grad=True)
 
         # Activation function
         self.activation_function = torch.sin

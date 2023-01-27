@@ -31,9 +31,7 @@ def train_neural_grid():
     # model = GridNeuralNetwork3D(cfg)
     model.to(device)
 
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=cfg["training"]["learning_rate"]
-    )
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg["training"]["learning_rate"])
 
     writer = SummaryWriter()
 
@@ -97,9 +95,7 @@ def train_neural_grid():
             )
 
         if epoch % cfg["tracking"]["test_stats_every_n_epochs"] == 0:
-            test_loss, test_accuracy = comp_metrics(
-                model=model, data_loader=test_loader, device=device
-            )
+            test_loss, test_accuracy = comp_metrics(model=model, data_loader=test_loader, device=device)
             writer.add_scalar("test_loss", test_loss, global_step=epoch)
             writer.add_scalar("test_accuracy", test_accuracy, global_step=epoch)
 

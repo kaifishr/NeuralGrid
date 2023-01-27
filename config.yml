@@ -18,8 +18,8 @@ grid_3d:
   n_layers: 16
 
 training:
-  batch_size: 512
-  learning_rate: 1.0e-4
+  batch_size: 64
+  learning_rate: 6.0e-4
   n_epochs: 1000
   n_workers: 2  # set to 0 for debugging
 

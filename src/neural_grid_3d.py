@@ -72,18 +72,14 @@ class GridLayer(nn.Module):
 
         weight.resize_(1, 1, grid_height, grid_width)
         self.weight = nn.Parameter(data=weight, requires_grad=True)
-        self.bias = nn.Parameter(
-            data=torch.zeros(size=(grid_height, grid_width)), requires_grad=True
-        )
+        self.bias = nn.Parameter(data=torch.zeros(size=(grid_height, grid_width)), requires_grad=True)
 
         self.activation_function = torch.sin
 
     def forward(self, x):
         # Unfold activations and weights for grid operations
         x = F.unfold(input=x, kernel_size=self.kernel_size, padding=self.padding)
-        w = F.unfold(
-            input=self.weight, kernel_size=self.kernel_size, padding=self.padding
-        )
+        w = F.unfold(input=self.weight, kernel_size=self.kernel_size, padding=self.padding)
 
         # Prepare data
         x = x.view(
