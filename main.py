@@ -10,7 +10,6 @@ from torch.utils.tensorboard import SummaryWriter
 
 
 def train_neural_grid():
-
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
 
@@ -40,7 +39,6 @@ def train_neural_grid():
     pathlib.Path(model_path).mkdir(parents=True, exist_ok=True)
 
     for epoch in range(cfg["training"]["n_epochs"]):
-
         running_loss = 0.0
         running_accuracy = 0.0
         running_counter = 0
@@ -77,7 +75,6 @@ def train_neural_grid():
 
         # Write trainings statistics
         if epoch % cfg["tracking"]["train_stats_every_n_epochs"] == 0:
-
             train_loss = running_loss / running_counter
             train_accuracy = running_accuracy / running_counter
 
@@ -95,7 +92,9 @@ def train_neural_grid():
             )
 
         if epoch % cfg["tracking"]["test_stats_every_n_epochs"] == 0:
-            test_loss, test_accuracy = comp_metrics(model=model, data_loader=test_loader, device=device)
+            test_loss, test_accuracy = comp_metrics(
+                model=model, data_loader=test_loader, device=device
+            )
             writer.add_scalar("test_loss", test_loss, global_step=epoch)
             writer.add_scalar("test_accuracy", test_accuracy, global_step=epoch)
 

@@ -46,7 +46,6 @@ def comp_metrics(model, data_loader, device):
     running_counter = 0
 
     with torch.no_grad():
-
         for inputs, labels in data_loader:
             inputs, labels = inputs.to(device), labels.to(device)
 
@@ -84,7 +83,6 @@ def data_generator(cfg):
     """
 
     if cfg["data"]["name"] == "mnist":
-
         mean = (0.1307,)
         std = (0.3081,)
 
@@ -96,7 +94,9 @@ def data_generator(cfg):
             ]
         )
 
-        transform_test = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
+        transform_test = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+        )
 
         train_set = torchvision.datasets.MNIST(
             root=cfg["paths"]["data"],
@@ -113,7 +113,6 @@ def data_generator(cfg):
         )
 
     elif cfg["data"]["name"] == "fashion_mnist":
-
         mean = (0.2859,)
         std = (0.3530,)
 
@@ -127,7 +126,9 @@ def data_generator(cfg):
             ]
         )
 
-        transform_test = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
+        transform_test = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+        )
 
         train_set = torchvision.datasets.FashionMNIST(
             root=cfg["paths"]["data"],
@@ -144,7 +145,6 @@ def data_generator(cfg):
         )
 
     elif cfg["data"]["name"] == "cifar10":
-
         mean = (0.49139968, 0.48215841, 0.44653091)
         std = (0.24703223, 0.24348513, 0.26158784)
 
@@ -159,7 +159,9 @@ def data_generator(cfg):
             ]
         )
 
-        transform_test = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean, std)])
+        transform_test = transforms.Compose(
+            [transforms.ToTensor(), transforms.Normalize(mean, std)]
+        )
 
         mean, std = None, None
 
