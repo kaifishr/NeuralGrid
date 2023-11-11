@@ -32,7 +32,7 @@ class GridNeuralNetwork2D(nn.Module):
 
         self.neural_grid = NeuralGrid(params)
         # Very slow version of neural grid, runs only on CPU with batch_size=1
-        # self.neural_grid = NeuralGrid2(params)
+        # self.neural_grid = NaiveNeuralGrid(params)
 
     def forward(self, x):
         x = x.flatten(start_dim=1)
@@ -45,27 +45,76 @@ class GridNeuralNetwork2D(nn.Module):
 class NeuralGrid(nn.Module):
     """Implements a neural grid"""
 
-    def __init__(self, params):
+    def __init__(self, params: dict):
         super().__init__()
 
-        grid_height = params["grid_2d"]["height"]
         grid_width = params["grid_2d"]["width"]
 
-        # Add grid layers to a list
-        self.grid_layers = nn.ModuleList()
+        blocks = []
         for _ in range(grid_width):
-            self.grid_layers.append(GridLayer(params))
+            blocks.append(GridLayer(params))
+        self.grid_blocks = nn.Sequential(*blocks)
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        x = self.grid_blocks(x)
+        return x
+
+
+class GridBlock(nn.Module):
+    """Implements a neural grid"""
+
+    def __init__(self, params: dict):
+        super().__init__()
+        grid_height = params["grid_2d"]["height"]
+        self.grid_layer = GridLayer(params)
+        self.gelu = nn.GELU()
         self.layer_norm = nn.LayerNorm(grid_height)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        for grid_layer in self.grid_layers:
-            x = x + grid_layer(torch.relu(self.layer_norm(x)))
+        x = x + self.layer_norm(self.gelu(self.grid_layers(x)))
         return x
 
 
 class GridLayer(nn.Module):
-    """Class implements layer of a neural grid"""
+    """Class implements layer of a neural grid.
+
+    Uses 1d convolution with constant kernel.
+    """
+
+    def __init__(self, params, kernel_size: int = 3, stride: int = 1):
+        super().__init__()
+
+        grid_height = params["grid_2d"]["height"]
+
+        self.kernel_size = kernel_size  # kernels must be of size 2n+1 where n>0
+        self.stride = stride
+
+        # Trainable parameters
+        weight = xavier_init(size=(grid_height,), fan_in=self.kernel_size, fan_out=1)
+        # weight = kaiming_init(size=(grid_height,), fan_in=self.kernel_size, gain=2.0**0.5)
+        self.weight = nn.Parameter(weight, requires_grad=True)
+        self.bias = nn.Parameter(torch.zeros(size=(grid_height,)), requires_grad=True)
+
+        kernel = torch.ones(1, 1, self.kernel_size)
+        self.kernel = nn.Parameter(kernel, requires_grad=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        if len(x.shape) == 1:
+            x = x[None, None, :]
+        elif len(x.shape) == 2:
+            x = x[:, None, :]
+        # x = torch.unsqueeze(x, dim=1)
+        # x = x[:, None, :]  # Add single channel dimension.
+        # print(f"{x.shape = }")
+        # exit()
+        # x = F.conv1d(x * self.weight + self.bias, self.kernel, stride=self.stride, padding="same")  # Option 1
+        x = F.conv1d(x * self.weight, self.kernel, stride=self.stride, padding="same") + self.bias  # Option 2 
+        x = torch.squeeze(x)
+        return x
+
+
+class GridLayer2(nn.Module):
+    """Grid layer that uses unfolding."""
 
     def __init__(self, params):
         super().__init__()
@@ -84,7 +133,6 @@ class GridLayer(nn.Module):
         # self.weight = nn.Parameter(0.1 + 0.0 * weight, requires_grad=True)
         self.bias = nn.Parameter(torch.zeros(size=(grid_height,)), requires_grad=True)
 
-
     def forward(self, x_in: torch.Tensor) -> torch.Tensor:
         # Same padding to ensure that input size equals output size
         x = F.pad(input=x_in, pad=[self.padding, self.padding], mode="constant", value=0.0)
@@ -97,7 +145,7 @@ class GridLayer(nn.Module):
         return x
 
 
-class NeuralGrid2(nn.Module):
+class NaiveNeuralGrid(nn.Module):
     """
     Implements a naive version of a neural grid in PyTorch
     Works only on CPU and batch_size 1
@@ -109,13 +157,18 @@ class NeuralGrid2(nn.Module):
         self.grid_height = params["grid_2d"]["height"]
 
         # Placeholder for activations
-        self.a = [[torch.zeros(size=(1,)) for _ in range(self.grid_width + 1)] for _ in range(self.grid_height + 2)]
+        self.a = [
+            [torch.zeros(size=(1,)) for _ in range(self.grid_width + 1)]
+            for _ in range(self.grid_height + 2)
+        ]
 
         # Trainable parameters
         w = xavier_init(size=(self.grid_height, self.grid_width), fan_in=3, fan_out=3)
         w = F.pad(input=w, pad=[0, 0, 1, 1], mode="constant", value=0.0)
         self.w = nn.Parameter(w, requires_grad=True)
-        self.b = nn.Parameter(torch.zeros(size=(self.grid_height, self.grid_width)), requires_grad=True)
+        self.b = nn.Parameter(
+            torch.zeros(size=(self.grid_height, self.grid_width)), requires_grad=True
+        )
 
         # Activation function
         self.activation_function = torch.sin
