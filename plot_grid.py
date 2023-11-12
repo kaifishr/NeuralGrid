@@ -167,7 +167,6 @@ def vis_grid_2d(model, data_dict, cfg):
 
     for module in model.modules():
         if isinstance(module, GridLayer):
-
             weight = module.weight.detach().numpy()
             weight = np.squeeze(weight)
             weight_grid.append(weight)
@@ -305,8 +304,7 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    # model_path = "models/Nov12_12-09-49_fermat/model.pth"
-    model_path = "models/Nov12_18-28-58_fermat/model.pth"
+    model_path = "models/<run>/model.pth"
 
     plot_grid_2d(cfg, model_path)
     # plot_grid_3d(cfg, model_path)

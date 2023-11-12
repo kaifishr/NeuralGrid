@@ -150,8 +150,8 @@ def data_generator(cfg):
 
         transform_train = transforms.Compose(
             [
-                # transforms.RandomHorizontalFlip(),
-                # transforms.RandomVerticalFlip(),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
                 # transforms.RandomCrop(32, padding=4),
                 transforms.ToTensor(),
                 transforms.RandomErasing(),

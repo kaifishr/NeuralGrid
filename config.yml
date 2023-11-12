@@ -4,15 +4,15 @@ paths:
   data: "./data/"
 
 data:
-  name: "cifar10"
-  image_width: 32
-  image_height: 32
-  n_channels: 3
+  name: "fashion_mnist"
+  image_width: 28
+  image_height: 28
+  n_channels: 1
   n_classes: 10
 
 grid_2d:
-  height: 16
-  width: 32
+  height: 64
+  width: 16
 
 grid_3d:
   n_layers: 16
@@ -20,7 +20,7 @@ grid_3d:
 training:
   batch_size: 128
   learning_rate: 4.0e-4
-  n_epochs: 1000
+  n_epochs: 10000
   n_workers: 2  # set to 0 for debugging
 
 testing:
@@ -32,7 +32,7 @@ tracking:
   save_model_every_n_epochs:  10
 
 visualization:
-  n_samples: 20
+  n_samples: 40
   color_map: "bwr"
   interpolation: null # "null" stands for "None", "spline16", "sinc"
   resolution: 250

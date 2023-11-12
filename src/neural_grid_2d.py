@@ -34,12 +34,20 @@ class GridNeuralNetwork2D(nn.Module):
         # Very slow version of neural grid, runs only on CPU with batch_size=1
         # self.neural_grid = NaiveNeuralGrid(params)
 
+        self.apply(self.weights_init)
+
     def forward(self, x):
         x = x.flatten(start_dim=1)
         x = self.layer_norm(self.linear_in(x))
         x = self.neural_grid(x)
         x = self.linear_out(x)
         return x
+
+    def weights_init(self, module: nn.Module):
+        if isinstance(module, nn.Linear):
+            torch.nn.init.xavier_uniform_(module.weight)
+            if module.bias is not None:
+                torch.nn.init.zeros_(module.bias)
 
 
 class NeuralGrid(nn.Module):
@@ -70,10 +78,12 @@ class GridBlock(nn.Module):
         # self.grid_layer = GridLayer2(params)  # Uses `unfold`-operation.
         self.gelu = nn.GELU()
         self.layer_norm = nn.LayerNorm(grid_height)
+        self.dropout = nn.Dropout(p=0.1)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # x = x + self.layer_norm(self.gelu(self.grid_layer(x)))
         x = self.layer_norm(self.gelu(self.grid_layer(x)))
+        x = self.dropout(x)
         return x
 
 
