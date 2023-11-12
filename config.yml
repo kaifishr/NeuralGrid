@@ -11,8 +11,8 @@ data:
   n_classes: 10
 
 grid_2d:
-  height: 64
-  width: 64
+  height: 32
+  width: 32
 
 grid_3d:
   n_layers: 16
@@ -32,7 +32,7 @@ tracking:
   save_model_every_n_epochs:  10
 
 visualization:
-  n_samples: 16
+  n_samples: 20
   color_map: "seismic"
   interpolation: null # "null" stands for "None", "spline16", "sinc"
   resolution: 250

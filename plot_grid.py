@@ -9,18 +9,14 @@ import pathlib
 
 import matplotlib.pyplot as plt
 import numpy as np
-import torch
 
-# import torchvision
+import torch
 import torchvision.transforms as transforms
 import yaml
 
 from src.neural_grid_2d import GridNeuralNetwork2D
 from src.neural_grid_2d import GridLayer
-
 from src.neural_grid_3d import GridNeuralNetwork3D
-
-# from torch.utils.data import DataLoader
 from src.utils import data_generator
 
 
@@ -209,7 +205,9 @@ def vis_grid_3d(model, data_dict, cfg, visualize_class=0):
 
     # Get random sample of defined number
     rnd_idx = np.random.randint(n_samples)
-    x = data_dict[visualize_class]["images"][rnd_idx].reshape(1, n_channels, image_height, image_width)
+    x = data_dict[visualize_class]["images"][rnd_idx].reshape(
+        1, n_channels, image_height, image_width
+    )
     _ = model(x)
 
     activation_grid = list()
@@ -285,7 +283,6 @@ def vis_grid_3d(model, data_dict, cfg, visualize_class=0):
 
 
 if __name__ == "__main__":
-
     # Load config
     with open("config.yml", "r") as file:
         cfg = yaml.load(file, Loader=yaml.FullLoader)
@@ -294,7 +291,7 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    model_path = "models/Jan27_13-50-37/model.pth"
+    model_path = "models/Nov12_08-59-33/model.pth"
 
     plot_grid_2d(cfg, model_path)
     # plot_grid_3d(cfg, model_path)

@@ -23,6 +23,7 @@ def kaiming_init(size: tuple, fan_in: float, gain: float = 1.0):
     return x
 
 
+@torch.no_grad()
 def comp_metrics(model, data_loader, device):
     """Function to compute metrics for test dataset.
 
@@ -45,24 +46,23 @@ def comp_metrics(model, data_loader, device):
     running_accuracy = 0.0
     running_counter = 0
 
-    with torch.no_grad():
-        for inputs, labels in data_loader:
-            inputs, labels = inputs.to(device), labels.to(device)
+    for inputs, labels in data_loader:
+        inputs, labels = inputs.to(device), labels.to(device)
 
-            # Preparing input data
-            x = inputs
-            y = labels.long()
+        # Preparing input data
+        x = inputs
+        y = labels.long()
 
-            # Feedforward
-            y_pred = model(x)
+        # Feedforward
+        y_pred = model(x)
 
-            # Loss
-            loss = loss_func(input=y_pred, target=y)
+        # Loss
+        loss = loss_func(input=y_pred, target=y)
 
-            # Metrics
-            running_loss += loss.item()
-            running_accuracy += (torch.argmax(y_pred, dim=-1) == y).float().sum()
-            running_counter += labels.size(0)
+        # Metrics
+        running_loss += loss.item()
+        running_accuracy += (torch.argmax(y_pred, dim=-1) == y).float().sum()
+        running_counter += labels.size(0)
 
     loss = running_loss / running_counter
     accuracy = running_accuracy / running_counter
@@ -150,9 +150,9 @@ def data_generator(cfg):
 
         transform_train = transforms.Compose(
             [
-                transforms.RandomHorizontalFlip(),
-                transforms.RandomVerticalFlip(),
-                transforms.RandomCrop(32, padding=4),
+                # transforms.RandomHorizontalFlip(),
+                # transforms.RandomVerticalFlip(),
+                # transforms.RandomCrop(32, padding=4),
                 transforms.ToTensor(),
                 transforms.RandomErasing(),
                 transforms.Normalize(mean, std),
@@ -163,14 +163,13 @@ def data_generator(cfg):
             [transforms.ToTensor(), transforms.Normalize(mean, std)]
         )
 
-        mean, std = None, None
-
         train_set = torchvision.datasets.CIFAR10(
             root=cfg["paths"]["data"],
             train=True,
             download=True,
             transform=transform_train,
         )
+
         test_set = torchvision.datasets.CIFAR10(
             root=cfg["paths"]["data"],
             train=False,

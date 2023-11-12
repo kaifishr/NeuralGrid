@@ -25,8 +25,8 @@ class GridNeuralNetwork2D(nn.Module):
 
         # Dense layers
         n_inputs = image_height * image_width * n_channels
-        self.linear_1 = nn.Linear(n_inputs, grid_height)
-        self.linear_2 = nn.Linear(grid_height, n_outputs)
+        self.linear_in = nn.Linear(n_inputs, grid_height)
+        self.linear_out = nn.Linear(grid_height, n_outputs)
 
         self.layer_norm = nn.LayerNorm(grid_height)
 
@@ -36,9 +36,9 @@ class GridNeuralNetwork2D(nn.Module):
 
     def forward(self, x):
         x = x.flatten(start_dim=1)
-        x = self.layer_norm(self.linear_1(x))
+        x = self.layer_norm(self.linear_in(x))
         x = self.neural_grid(x)
-        x = self.linear_2(x)
+        x = self.linear_out(x)
         return x
 
 
@@ -52,7 +52,7 @@ class NeuralGrid(nn.Module):
 
         blocks = []
         for _ in range(grid_width):
-            blocks.append(GridLayer(params))
+            blocks.append(GridBlock(params))
         self.grid_blocks = nn.Sequential(*blocks)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
@@ -67,11 +67,12 @@ class GridBlock(nn.Module):
         super().__init__()
         grid_height = params["grid_2d"]["height"]
         self.grid_layer = GridLayer(params)
+        # self.grid_layer = GridLayer2(params)  # Uses `unfold`-operation.
         self.gelu = nn.GELU()
         self.layer_norm = nn.LayerNorm(grid_height)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x + self.layer_norm(self.gelu(self.grid_layers(x)))
+        x = x + self.layer_norm(self.gelu(self.grid_layer(x)))
         return x
 
 
@@ -86,7 +87,7 @@ class GridLayer(nn.Module):
 
         grid_height = params["grid_2d"]["height"]
 
-        self.kernel_size = kernel_size  # kernels must be of size 2n+1 where n>0
+        self.kernel_size = kernel_size
         self.stride = stride
 
         # Trainable parameters
@@ -99,16 +100,11 @@ class GridLayer(nn.Module):
         self.kernel = nn.Parameter(kernel, requires_grad=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        if len(x.shape) == 1:
-            x = x[None, None, :]
-        elif len(x.shape) == 2:
-            x = x[:, None, :]
-        # x = torch.unsqueeze(x, dim=1)
-        # x = x[:, None, :]  # Add single channel dimension.
-        # print(f"{x.shape = }")
-        # exit()
-        # x = F.conv1d(x * self.weight + self.bias, self.kernel, stride=self.stride, padding="same")  # Option 1
-        x = F.conv1d(x * self.weight, self.kernel, stride=self.stride, padding="same") + self.bias  # Option 2 
+        x = x[:, None, :]  # Add single channel dimension.
+        x = F.conv1d(
+            x * self.weight + self.bias, self.kernel, stride=self.stride, padding="same"
+        )  # Option 1
+        # x = F.conv1d(x * self.weight, self.kernel, stride=self.stride, padding="same") + self.bias  # Option 2
         x = torch.squeeze(x)
         return x
 
@@ -121,23 +117,22 @@ class GridLayer2(nn.Module):
 
         grid_height = params["grid_2d"]["height"]
 
-        self.kernel_size = 3  # kernels must be of size 2n+1 where n>0
+        self.kernel_size = 3  # Kernels must be of size 2n+1 where n>0.
         self.stride = 1
         self.padding = int(0.5 * (self.kernel_size - 1))
 
         # Trainable parameters
-        # weight = xavier_init(size=(grid_height,), fan_in=self.kernel_size, fan_out=1)
-        weight = kaiming_init(size=(grid_height,), fan_in=self.kernel_size, gain=2.0**0.5)
+        weight = xavier_init(size=(grid_height,), fan_in=self.kernel_size, fan_out=1)
+        # weight = kaiming_init(size=(grid_height,), fan_in=self.kernel_size, gain=2.0**0.5)
         weight = F.pad(input=weight, pad=[self.padding, self.padding], mode="constant", value=0.0)
         self.weight = nn.Parameter(weight, requires_grad=True)
-        # self.weight = nn.Parameter(0.1 + 0.0 * weight, requires_grad=True)
         self.bias = nn.Parameter(torch.zeros(size=(grid_height,)), requires_grad=True)
 
     def forward(self, x_in: torch.Tensor) -> torch.Tensor:
-        # Same padding to ensure that input size equals output size
+        # Same padding to ensure that input size equals output size.
         x = F.pad(input=x_in, pad=[self.padding, self.padding], mode="constant", value=0.0)
 
-        # Unfold activations and weights for grid operations
+        # Unfold activations and weights for grid operations.
         x = x.unfold(dimension=1, size=self.kernel_size, step=self.stride)
         w = self.weight.unfold(dimension=0, size=self.kernel_size, step=self.stride)
         x = (w * x).sum(dim=-1) + self.bias
