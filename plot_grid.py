@@ -162,11 +162,18 @@ def vis_grid_2d(model, data_dict, cfg):
 
     for module in model.modules():
         if isinstance(module, GridLayer):
-            weight_grid.append(module.weight.detach().numpy())
-            bias_grid.append(module.bias.detach().numpy())
+            weight = module.weight.detach().numpy()
+            bias = module.bias.detach().numpy()
+            weight = np.squeeze(weight)
+            bias = np.squeeze(bias)
+            weight_grid.append(weight)
+            bias_grid.append(bias)
 
-    weight_grid = np.array(weight_grid)[:, 1:-1].T
-    bias_grid = np.array(bias_grid).T
+    weight_grid = np.array(weight_grid)
+    weight_grid = weight_grid.T
+
+    bias_grid = np.array(bias_grid)
+    bias_grid = bias_grid.T
 
     fig, axes = plt.subplots(nrows=2, ncols=1, figsize=(4, 5))
 
@@ -179,7 +186,7 @@ def vis_grid_2d(model, data_dict, cfg):
         ax.set_axis_off()
 
     plt.tight_layout()
-    plt.savefig(results_dir + "parameter_grid.png", dpi=dpi)
+    plt.savefig(results_dir + "parameter_grid.png", bbox_inches="tight", dpi=dpi)
     plt.close(fig)
 
 
@@ -291,7 +298,7 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    model_path = "models/Nov12_08-59-33/model.pth"
+    model_path = "models/<run>/model.pth"
 
     plot_grid_2d(cfg, model_path)
     # plot_grid_3d(cfg, model_path)

@@ -1,4 +1,6 @@
 """Program to train grid-based neural networks."""
+import random
+import numpy
 import torch
 import pathlib
 import yaml
@@ -103,4 +105,8 @@ def train_neural_grid():
 
 
 if __name__ == "__main__":
+    seed = 73274
+    torch.manual_seed(seed)
+    random.seed(seed)
+    numpy.random.seed(seed)
     train_neural_grid()

@@ -4,10 +4,10 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from torch.nn.init import xavier_uniform_
+
 from src.utils import xavier_init
 from src.utils import kaiming_init
-
-torch.manual_seed(73274)
 
 
 class GridNeuralNetwork2D(nn.Module):
@@ -72,7 +72,8 @@ class GridBlock(nn.Module):
         self.layer_norm = nn.LayerNorm(grid_height)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x + self.layer_norm(self.gelu(self.grid_layer(x)))
+        # x = x + self.layer_norm(self.gelu(self.grid_layer(x)))
+        x = self.layer_norm(self.gelu(self.grid_layer(x)))
         return x
 
 
@@ -86,26 +87,26 @@ class GridLayer(nn.Module):
         super().__init__()
 
         grid_height = params["grid_2d"]["height"]
-
         self.kernel_size = kernel_size
         self.stride = stride
 
-        # Trainable parameters
-        weight = xavier_init(size=(grid_height,), fan_in=self.kernel_size, fan_out=1)
-        # weight = kaiming_init(size=(grid_height,), fan_in=self.kernel_size, gain=2.0**0.5)
+        weight = torch.empty(size=(1, grid_height))
+        xavier_uniform_(tensor=weight)
         self.weight = nn.Parameter(weight, requires_grad=True)
-        self.bias = nn.Parameter(torch.zeros(size=(grid_height,)), requires_grad=True)
+
+        bias = torch.empty(size=(1, grid_height))
+        xavier_uniform_(tensor=bias)
+        self.bias = nn.Parameter(bias, requires_grad=True)
 
         kernel = torch.ones(1, 1, self.kernel_size)
         self.kernel = nn.Parameter(kernel, requires_grad=False)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = x[:, None, :]  # Add single channel dimension.
-        x = F.conv1d(
-            x * self.weight + self.bias, self.kernel, stride=self.stride, padding="same"
-        )  # Option 1
-        # x = F.conv1d(x * self.weight, self.kernel, stride=self.stride, padding="same") + self.bias  # Option 2
-        x = torch.squeeze(x)
+        x = torch.unsqueeze(x, dim=1)  # Add single channel dimension.
+        x = x * self.weight
+        x = F.conv1d(input=x, weight=self.kernel, stride=self.stride, padding="same")
+        x = x + self.bias
+        x = torch.squeeze(x, dim=1)
         return x
 
 
