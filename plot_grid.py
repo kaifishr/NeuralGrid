@@ -128,7 +128,12 @@ def vis_grid_2d(model, data_dict, cfg):
     ##################
     # Plot activations
     ##################
-    fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(16, 4))
+    ratio = int(h / w)
+    nrows = 2
+    ncols = 5
+    figsize = (nrows * ratio, ncols) if (h < w) else (ncols, nrows * ratio)
+
+    fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
 
     for i, ax in enumerate(axes.flatten()):
         grid = np.array(activation_grids[i]).mean(axis=0)
@@ -141,7 +146,7 @@ def vis_grid_2d(model, data_dict, cfg):
     plt.savefig(results_dir + "avg_activation_grid.png", bbox_inches="tight", dpi=dpi)
     plt.close(fig)
 
-    fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(16, 4))
+    fig, axes = plt.subplots(nrows=2, ncols=5, figsize=figsize)
 
     for i, ax in enumerate(axes.flatten()):
         grid = np.array(activation_grids[i]).std(axis=0)
@@ -162,11 +167,13 @@ def vis_grid_2d(model, data_dict, cfg):
 
     for module in model.modules():
         if isinstance(module, GridLayer):
+
             weight = module.weight.detach().numpy()
-            bias = module.bias.detach().numpy()
             weight = np.squeeze(weight)
-            bias = np.squeeze(bias)
             weight_grid.append(weight)
+
+            bias = module.bias.detach().numpy()
+            bias = np.squeeze(bias)
             bias_grid.append(bias)
 
     weight_grid = np.array(weight_grid)
@@ -298,7 +305,8 @@ if __name__ == "__main__":
     pathlib.Path(cfg["paths"]["results"]).mkdir(parents=True, exist_ok=True)
 
     # Path to model to be visualized
-    model_path = "models/<run>/model.pth"
+    # model_path = "models/Nov12_12-09-49_fermat/model.pth"
+    model_path = "models/Nov12_18-28-58_fermat/model.pth"
 
     plot_grid_2d(cfg, model_path)
     # plot_grid_3d(cfg, model_path)
